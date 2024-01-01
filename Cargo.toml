@@ -1,0 +1,19 @@
+[package]
+name = "proer"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "proer"
+path = "src/proer/lib.rs"
+
+[[bin]]
+name = "test"
+path = "src/test/main.rs"
+
+[dependencies]
+log = "0.4.20"
+env_logger = "0.10.1"
+glfw = "0.54.0"
+gl = "0.14.0"
+image = "0.24.7"
