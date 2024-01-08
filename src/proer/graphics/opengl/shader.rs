@@ -1,3 +1,5 @@
+extern crate nalgebra;
+
 pub struct ShaderProgram {
     id: u32,
 }
@@ -68,6 +70,21 @@ impl super::super::shader::Shader for ShaderProgram {
             }
 
             Some(Self { id: program } )
+        }
+    }
+
+    fn set_uniform_matrix(&mut self, location: u32, value: nalgebra::Matrix4<f32>) {
+        self.bind();
+        unsafe {
+            gl::UniformMatrix4fv(location.try_into().unwrap(), 1, 1, value.view((0, 0), (4, 4)).as_ptr());
+        }
+    }
+
+    fn get_uniform_location(&mut self, name: &str) -> u32 {
+        unsafe {
+            let mut n = 0;
+            gl::GetProgramiv(self.id, gl::ACTIVE_UNIFORM_MAX_LENGTH, &mut n);
+            gl::GetUniformLocation(self.id, std::ffi::CString::new(name).unwrap().as_ptr()).try_into().unwrap()
         }
     }
 }

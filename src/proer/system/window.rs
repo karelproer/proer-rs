@@ -2,7 +2,7 @@ use super::event;
 
 
 pub trait Window {
-    type Platform;
+    type Platform: super::platform::Platform;
     fn new(platform: &mut Self::Platform, size: (u32,  u32), title: &str) -> Self;
     fn open(&mut self, platform: &mut Self::Platform) -> bool;
     fn update(&mut self, platform: &mut Self::Platform);

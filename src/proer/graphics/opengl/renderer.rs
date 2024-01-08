@@ -8,13 +8,12 @@ use super::texture::Texture;
 use super::shader::ShaderProgram;
 use super::super::vertexlayout::VertexAtribute;
 
-
-pub struct Renderer {
-    context: std::rc::Rc<std::cell::RefCell<dyn window::OpenGLContext>>,
+pub struct Renderer<Context> {
+    context: std::rc::Rc<std::cell::RefCell<Context>>
 }
 
-impl super::super::renderer::Renderer<dyn window::OpenGLContext> for Renderer {
-    fn new(context: std::rc::Rc<std::cell::RefCell<dyn window::OpenGLContext>>) -> Self {
+impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> for Renderer<Context> {
+    fn new(context: std::rc::Rc<std::cell::RefCell<Context>>) -> Self {
         gl::load_with(|s| context.borrow_mut().get_proc_address(s));
         Self {
             context
