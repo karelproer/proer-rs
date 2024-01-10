@@ -1,5 +1,10 @@
 use super::event;
 
+pub enum CursorMode {
+    Normal,
+    Hidden,
+    Disabled,
+}
 
 pub trait Window {
     type Platform: super::platform::Platform;
@@ -7,6 +12,8 @@ pub trait Window {
     fn open(&mut self, platform: &mut Self::Platform) -> bool;
     fn update(&mut self, platform: &mut Self::Platform);
     fn get_event(&mut self) -> Option<event::Event>;
+    fn set_cursor_mode(&mut self, mode: CursorMode);
+    fn set_raw_mouse_input(&mut self, raw: bool, platform: &mut Self::Platform) -> bool;
 }
 
 pub trait OpenGLContext {

@@ -99,4 +99,8 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
     pub fn get_size(&self) -> (u32, u32) {
         self.size
     }
+
+    pub fn set_raw_mouse_input(&mut self, raw: bool) -> bool {
+        self.window.borrow_mut().set_raw_mouse_input(raw, &mut self.platform)
+    }
 }
