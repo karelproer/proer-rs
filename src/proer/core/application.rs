@@ -9,10 +9,10 @@ use std::{vec::Vec, boxed::Box, cell::RefCell};
 
 
 pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
-    renderer: RendererImpl,
-    platform: WindowImpl::Platform,
-    window: std::rc::Rc<RefCell<WindowImpl>>,
     layers: Vec<Box<dyn Layer<WindowImpl, RendererImpl>>>,
+    renderer: RendererImpl,
+    window: std::rc::Rc<RefCell<WindowImpl>>,
+    platform: WindowImpl::Platform,
     running: bool,
     frame_timer: FrameTimer,
     size: (u32, u32),
@@ -68,13 +68,11 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
                 }
                 self.layers = layers_borrowed;        
             }
-
             let mut layers_borrowed = std::mem::replace(&mut self.layers, vec!());
             for l in &mut layers_borrowed {
                 l.on_update(dur, self);
             }
             self.layers = layers_borrowed;
-
             self.window.borrow_mut().update(&mut self.platform);
         }
 

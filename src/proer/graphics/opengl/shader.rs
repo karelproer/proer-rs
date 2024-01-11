@@ -113,6 +113,7 @@ impl super::super::shader::Shader for ShaderProgram {
 impl Drop for ShaderProgram {
     fn drop(&mut self) {
         unsafe {
+            gl::UseProgram(0);
             gl::DeleteProgram(self.id);
         }
     }
