@@ -16,6 +16,7 @@ pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     running: bool,
     frame_timer: FrameTimer,
     size: (u32, u32),
+    cursor_pos: (f64, f64),
 }
 
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowImpl, RendererImpl> {
@@ -31,6 +32,7 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
             running: true,
             frame_timer: FrameTimer::new(),
             size,
+            cursor_pos: ((0.0, 0.0))
         }.run();
     }
 
@@ -51,6 +53,9 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
                     }
                     Event::Close => {
                         self.running = false;
+                    }
+                    Event::CursorMove(pos) => {
+                        self.cursor_pos = pos;
                     }
                     _ => {}
                 }
@@ -98,5 +103,13 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
 
     pub fn get_size(&self) -> (u32, u32) {
         self.size
+    }
+
+    pub fn set_raw_mouse_input(&mut self, raw: bool) -> bool {
+        self.window.borrow_mut().set_raw_mouse_input(raw, &mut self.platform)
+    }
+
+    pub fn get_cursor_pos(&mut self) -> (f64, f64) {
+        self.cursor_pos
     }
 }

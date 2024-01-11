@@ -1,5 +1,5 @@
 extern crate proer;
-use proer::system::window::Window;
+use proer::system::window::{Window, CursorMode};
 use proer::system::event::Event;
 use proer::graphics::renderer::Renderer;
 use proer::graphics::shader::Shader;
@@ -19,6 +19,8 @@ struct TestLayer {
 
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, RendererImpl> for TestLayer {
     fn on_update(&mut self, elapsed: std::time::Duration, app: &mut Application<WindowImpl, RendererImpl>) {
+        app.window().set_cursor_mode(CursorMode::Disabled);
+        assert!(app.set_raw_mouse_input(true));
         self.time += elapsed.as_secs_f32();
         let size = app.get_size();
         app.renderer().begin_scene(proer::graphics::color::Color { r: 0, g: 20, b: 0, a: 0 }, size);
@@ -56,7 +58,7 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, R
         const VERTICES: [Vertex; 4] =
         [Vertex([-0.5, -0.5, 0.0], [1.0, 1.0]), Vertex([0.5, -0.5, 0.0], [0.0, 1.0]), Vertex([0.5, 0.5, 0.0], [0.0, 0.0]), Vertex([-0.5, 0.5, 0.0], [1.0, 0.0])];
         const INDICES: [u32; 6] = [0, 1, 2, 0, 2, 3];
-        let image = image::open(env!("CARGO_MANIFEST_DIR").to_owned() + "/" + "image.jpg").unwrap().into_rgba8();
+        let image = image::open("image.jpg").unwrap().into_rgba8();
         let texture = [RendererImpl::TextureType::new(image, SamplingMode::Nearset)];
         app.renderer().draw(&VERTICES, &INDICES, &layout, shader, &texture);
 

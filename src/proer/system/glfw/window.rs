@@ -1,5 +1,6 @@
 extern crate glfw;
 use super::super::window;
+use super::super::window::CursorMode;
 use super::platform;
 use super::super::event::{Event, Key, Action};
 use super::super::mousebutton::MouseButton;
@@ -146,6 +147,21 @@ impl window::Window for Window {
             }
         }
         None
+    }
+
+    fn set_cursor_mode(&mut self, mode: CursorMode) {
+        self.window.set_cursor_mode(match mode {
+            CursorMode::Normal   => glfw::CursorMode::Normal,
+            CursorMode::Hidden   => glfw::CursorMode::Hidden,
+            CursorMode::Disabled => glfw::CursorMode::Disabled,
+        });
+    }
+
+    fn set_raw_mouse_input(&mut self, raw: bool, platform: &mut Self::Platform) -> bool {
+        if platform.get_glfw().supports_raw_motion() {
+            self.window.set_raw_mouse_motion(raw);
+            true
+        } else {false }
     }
 }
 
