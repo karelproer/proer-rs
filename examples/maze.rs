@@ -13,7 +13,7 @@ use std::f32;
 
 use std::{boxed::Box, vec::Vec};
 use nalgebra as na;
-use na::{Transform3, Matrix4, Rotation3, Translation3, Scale3, Vector2};
+use na::{Vector2};
 
 struct MazeLayer<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     player_pos: Vector2<f32>,
@@ -149,8 +149,8 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, R
         app.renderer().begin_scene(proer::graphics::color::Color { r: 0, g: 20, b: 0, a: 0 }, size);
         let layout: [VertexAtribute; 1] = [VertexAtribute { name: String::from("Pos"), datatype: VertexAttributeType::Float2, interpolate: true }];
         
-        let mut vertices = [Vertex ([ 1.0, 1.0 ]), Vertex ([ 1.0, -1.0 ]), Vertex ([ -1.0, -1.0 ]), Vertex ([ -1.0, 1.0 ])];
-        let mut indices = [0, 1, 2, 2, 3, 0];
+        let vertices = [Vertex ([ 1.0, 1.0 ]), Vertex ([ 1.0, -1.0 ]), Vertex ([ -1.0, -1.0 ]), Vertex ([ -1.0, 1.0 ])];
+        let indices = [0, 1, 2, 2, 3, 0];
         
         let rotate_sensitivity = 0.001;
         self.player_angle = (app.get_cursor_pos().0 as f32 * rotate_sensitivity) % f32::consts::PI * 2.0;
