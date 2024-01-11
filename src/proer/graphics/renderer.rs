@@ -12,5 +12,5 @@ pub trait Renderer<Context> {
     fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32));
     fn end_scene(&mut self);
 
-    fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: Self::ShaderType, textures: &[Self::TextureType]);
+    fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: &Self::ShaderType, textures: &[Self::TextureType]);
 }

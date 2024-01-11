@@ -1,6 +1,12 @@
 extern crate egui;
 use super::mousebutton::MouseButton;
-use super::mousebutton::Action;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Action {
+    Press,
+    Release,
+    Repeat,
+}
 
 pub type Key = egui::Key;
 

@@ -9,10 +9,3 @@ pub enum MouseButton {
     X4,
     X5,
 }
-
-#[derive(Debug, Clone, Copy)]
-pub enum Action {
-    Press,
-    Release,
-    Repeat,
-}

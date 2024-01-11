@@ -35,7 +35,7 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
     type ShaderType = ShaderProgram;
     type TextureType = Texture;
 
-    fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: Self::ShaderType, textures: &[Self::TextureType]) {
+    fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: &Self::ShaderType, textures: &[Self::TextureType]) {
         unsafe {
             let vao = Vao::new();
             vao.bind();

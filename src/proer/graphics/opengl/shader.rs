@@ -80,6 +80,27 @@ impl super::super::shader::Shader for ShaderProgram {
         }
     }
 
+    fn set_uniform_float(&mut self, location: u32, value: f32) {
+        self.bind();
+        unsafe {
+            gl::Uniform1f(location.try_into().unwrap(), value);
+        }
+    }
+    
+    fn set_uniform_float2(&mut self, location: u32, value: nalgebra::Vector2<f32>) {
+        self.bind();
+        unsafe {
+            gl::Uniform2f(location.try_into().unwrap(), value.x, value.y);
+        }
+    }
+
+    fn set_uniform_float3(&mut self, location: u32, value: nalgebra::Vector3<f32>) {
+        self.bind();
+        unsafe {
+            gl::Uniform3f(location.try_into().unwrap(), value.x, value.y, value.z);
+        }
+    }
+
     fn get_uniform_location(&mut self, name: &str) -> u32 {
         unsafe {
             let mut n = 0;

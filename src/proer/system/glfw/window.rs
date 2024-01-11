@@ -1,9 +1,8 @@
 extern crate glfw;
 use super::super::window;
 use super::platform;
-use super::super::event::{Event, Key};
+use super::super::event::{Event, Key, Action};
 use super::super::mousebutton::MouseButton;
-use super::super::mousebutton::Action;
 use glfw::Context;
 
 pub struct Window {
