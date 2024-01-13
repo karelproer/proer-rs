@@ -105,7 +105,8 @@ impl super::super::shader::Shader for ShaderProgram {
         unsafe {
             let mut n = 0;
             gl::GetProgramiv(self.id, gl::ACTIVE_UNIFORM_MAX_LENGTH, &mut n);
-            gl::GetUniformLocation(self.id, std::ffi::CString::new(name).unwrap().as_ptr()).try_into().unwrap()
+            let cname = std::ffi::CString::new(name).unwrap();
+            gl::GetUniformLocation(self.id, cname.as_ptr()).try_into().unwrap()
         }
     }
 }
