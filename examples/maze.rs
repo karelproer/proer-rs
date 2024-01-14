@@ -9,7 +9,7 @@ use proer::graphics::vertexlayout::VertexAttributeType;
 use proer::core::application::Application;
 use proer::core::layer::Layer;
 use std::f32;
-
+use proer::graphics::renderable::Renderable;
 
 use std::{boxed::Box, vec::Vec};
 use nalgebra as na;
@@ -24,6 +24,7 @@ struct MazeLayer<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     key_states: [bool; 4],
     fov: f32,
     player_speed: f32,
+    rectangle: Option<RendererImpl::RenderableType>,
 }
 
 #[repr(C)]
@@ -31,7 +32,7 @@ struct Vertex([f32; 2]);
 
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> MazeLayer<WindowImpl, RendererImpl> {
     fn move_player(&mut self, dir: Vector2<f32>, elapsed: std::time::Duration) {
-        const MIN_DISTANCE: f32 = 0.2;
+        const MIN_DISTANCE: f32 = 0.5;
         let new_pos_x = self.player_pos + MIN_DISTANCE * Vector2::<f32>::new(dir.x, 0.0);
         if self.map.as_ref().unwrap().get_pixel(new_pos_x.x.floor().rem_euclid(self.map.as_ref().unwrap().width() as f32) as u32, new_pos_x.y.floor().rem_euclid(self.map.as_ref().unwrap().height() as f32) as u32).0[0] < 100 {
             self.player_pos.x += dir.x * elapsed.as_secs_f32() * self.player_speed;
@@ -141,24 +142,24 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, R
         self.map = Some(image);
         let wallimage = image::open("examples/wall.jpg").unwrap().into_rgba8();
         self.textures.push(RendererImpl::TextureType::new(wallimage.clone(), SamplingMode::Linear));
+        let vertices = [Vertex ([ 1.0, 1.0 ]), Vertex ([ 1.0, -1.0 ]), Vertex ([ -1.0, -1.0 ]), Vertex ([ -1.0, 1.0 ])];
+        let indices = [0, 1, 2, 2, 3, 0];
+        let layout: [VertexAtribute; 1] = [VertexAtribute { name: String::from("Pos"), datatype: VertexAttributeType::Float2, interpolate: true }];
+        self.rectangle = Some(RendererImpl::RenderableType::new(&vertices, &indices, &layout));
     }
 
 
     fn on_update(&mut self, elapsed: std::time::Duration, app: &mut Application<WindowImpl, RendererImpl>) {
         let size = app.get_size();
         app.renderer().begin_scene(proer::graphics::color::Color { r: 0, g: 20, b: 0, a: 0 }, size);
-        let layout: [VertexAtribute; 1] = [VertexAtribute { name: String::from("Pos"), datatype: VertexAttributeType::Float2, interpolate: true }];
         
-        let vertices = [Vertex ([ 1.0, 1.0 ]), Vertex ([ 1.0, -1.0 ]), Vertex ([ -1.0, -1.0 ]), Vertex ([ -1.0, 1.0 ])];
-        let indices = [0, 1, 2, 2, 3, 0];
         
         let rotate_sensitivity = 0.001;
         self.player_angle = (app.get_cursor_pos().0 as f32 * rotate_sensitivity) % f32::consts::PI * 2.0;
         self.shader.as_mut().unwrap().set_uniform_float2(0, self.player_pos);
         self.shader.as_mut().unwrap().set_uniform_float(1, self.player_angle);
         self.shader.as_mut().unwrap().set_uniform_float(2, self.fov * size.0 as f32 / size.1 as f32);
-        app.renderer().draw(&vertices, &indices, &layout, self.shader.as_mut().unwrap(), &self.textures[..]);
-
+        app.renderer().draw_renderable(self.rectangle.as_mut().unwrap(), self.shader.as_mut().unwrap(), &self.textures[..]);
 
         if self.key_states[0] {
             self.move_player(Vector2::<f32>::new(self.player_angle.sin(), self.player_angle.cos()), elapsed);
@@ -195,5 +196,5 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, R
 fn main() {
     env_logger::init();
 
-    Application::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>>::new("proer", (800, 600), vec!(Box::new(MazeLayer::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>> {player_pos: Vector2::<f32>::new(6.5, 6.5), player_angle: 0.0, shader: None, textures: Vec::new(), key_states: [false; 4], map: None, fov: 0.69, player_speed: 2.0})));
+    Application::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>>::new("proer", (800, 600), vec!(Box::new(MazeLayer::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>> {player_pos: Vector2::<f32>::new(6.5, 6.5), player_angle: 0.0, shader: None, textures: Vec::new(), key_states: [false; 4], map: None, fov: 0.69, player_speed: 5.0, rectangle: None})));
 }

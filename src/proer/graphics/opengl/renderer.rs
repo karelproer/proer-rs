@@ -7,6 +7,7 @@ use super::ibo::Ibo;
 use super::texture::Texture;
 use super::shader::ShaderProgram;
 use super::super::vertexlayout::VertexAtribute;
+use super::renderable::Renderable;
 
 pub struct Renderer<Context> {
     context: std::rc::Rc<std::cell::RefCell<Context>>
@@ -56,5 +57,16 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
 
             gl::DrawElements(gl::TRIANGLES, indices.len().try_into().unwrap(), gl::UNSIGNED_INT, std::ptr::null());
         }
+    }
+
+    type RenderableType = Renderable;
+
+    fn draw_renderable(&mut self, renderable: &Renderable, shader: &Self::ShaderType, textures: &[Self::TextureType]) {
+        for (n, t) in textures.iter().enumerate() {
+            t.bind(n.try_into().unwrap());
+        }
+        
+        shader.bind();
+        renderable.draw();
     }
 }

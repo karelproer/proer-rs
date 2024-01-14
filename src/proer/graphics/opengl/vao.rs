@@ -22,6 +22,12 @@ impl Vao {
         }
     }
 
+    pub fn unbind() {
+        unsafe {
+            gl::BindVertexArray(0);
+        }
+    }
+
     pub fn vertex_attribute_type_to_opengl(t: VertexAttributeType) -> GLenum {
         match t {
             VertexAttributeType::Float => gl::FLOAT,
@@ -38,8 +44,8 @@ impl Vao {
         let mut size = 0;
         for (n, attr) in layout.iter().enumerate() {
             unsafe {
-                gl::EnableVertexAttribArray(n.try_into().unwrap());
                 gl::VertexAttribPointer(n.try_into().unwrap(), attr.datatype.amount().try_into().unwrap(), Self::vertex_attribute_type_to_opengl(attr.datatype), attr.interpolate as GLboolean, total_size.try_into().unwrap(), size as *const _);
+                gl::EnableVertexAttribArray(n.try_into().unwrap());
                 size += attr.datatype.size();
             }
         }
