@@ -1,7 +1,7 @@
 use super::super::texture;
 
 pub struct Texture {
-    id: u32,
+    pub id: u32,
 }
 
 impl Texture {
@@ -33,6 +33,23 @@ impl texture::Texture for Texture {
         }
     }
 
+    fn empty<P: image::Pixel>(size: (u32, u32), sampling_mode: texture::SamplingMode) -> Self {
+        unsafe {
+            let mut texture = 0;
+            gl::GenTextures(1, &mut texture);
+            gl::BindTexture(gl::TEXTURE_2D, texture);
+
+            let color_type = match P::COLOR_MODEL { "RGB" => gl::RGB, "RGBA" => gl::RGBA, _ => panic!("Unsupported image format!") };
+            gl::TexImage2D(gl::TEXTURE_2D, 0, color_type.try_into().unwrap(), size.0.try_into().unwrap(), size.1.try_into().unwrap(), 0, color_type, gl::UNSIGNED_BYTE, std::ptr::null());
+
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_S, gl::REPEAT.try_into().unwrap());
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_WRAP_T, gl::REPEAT.try_into().unwrap());
+
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MAG_FILTER, match sampling_mode { texture::SamplingMode::Nearset => gl::NEAREST, texture::SamplingMode::Linear => gl::LINEAR }.try_into().unwrap() );
+            gl::TexParameteri(gl::TEXTURE_2D, gl::TEXTURE_MIN_FILTER, match sampling_mode { texture::SamplingMode::Nearset => gl::LINEAR_MIPMAP_NEAREST, texture::SamplingMode::Linear => gl::LINEAR_MIPMAP_LINEAR }.try_into().unwrap() );
+            Self { id: texture }
+        }
+    }
 }
 
 impl Drop for Texture {

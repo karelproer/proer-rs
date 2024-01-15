@@ -3,15 +3,18 @@ use super::vertexlayout::VertexAtribute;
 use super::shader::Shader;
 use super::texture::Texture;
 use super::renderable::Renderable;
+use super::framebuffer::FrameBuffer;
 
 pub trait Renderer<Context> {
     type ShaderType: Shader;
     type TextureType: Texture;
     type RenderableType: Renderable;
-    
+    type FrameBufferType: FrameBuffer<TextureType = Self::TextureType>;
+
     fn new(context: std::rc::Rc<std::cell::RefCell<Context>>) -> Self;
     
     fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32));
+    fn begin_scene_framebuffer(&mut self, background: Color, viewport_size: (u32, u32), framebuffer: &mut Self::FrameBufferType);
     fn end_scene(&mut self);
 
     fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: &Self::ShaderType, textures: &[Self::TextureType]);

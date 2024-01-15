@@ -5,3 +5,4 @@ pub mod vertexlayout;
 pub mod shader;
 pub mod texture;
 pub mod renderable;
+pub mod framebuffer;
