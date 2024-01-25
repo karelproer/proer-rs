@@ -9,21 +9,22 @@ use super::shader::ShaderProgram;
 use super::super::vertexlayout::VertexAtribute;
 use super::renderable::Renderable;
 use super::framebuffer::FrameBuffer;
+use std::{sync::Arc, sync::Mutex};
 
 pub struct Renderer<Context> {
-    context: std::rc::Rc<std::cell::RefCell<Context>>
+    context: Arc<Mutex<Context>>
 }
 
 impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> for Renderer<Context> {
-    fn new(context: std::rc::Rc<std::cell::RefCell<Context>>) -> Self {
-        gl::load_with(|s| context.borrow_mut().get_proc_address(s));
+    fn new(context: Arc<Mutex<Context>>) -> Self {
+        gl::load_with(|s| context.lock().unwrap().get_proc_address(s));
         Self {
             context
         }
     }
 
     fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32)) {
-        self.context.borrow_mut().make_current();
+        self.context.lock().unwrap().make_current();
         FrameBuffer::unbind();
         unsafe {
             gl::Viewport(0, 0, viewport_size.0.try_into().unwrap(), viewport_size.1.try_into().unwrap());
@@ -35,7 +36,7 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
     type FrameBufferType = FrameBuffer;
 
     fn begin_scene_framebuffer(&mut self, background: Color, viewport_size: (u32, u32), framebuffer: &mut FrameBuffer) {
-        self.context.borrow_mut().make_current();
+        self.context.lock().unwrap().make_current();
         framebuffer.bind();
         unsafe {
             gl::Viewport(0, 0, viewport_size.0.try_into().unwrap(), viewport_size.1.try_into().unwrap());
@@ -76,6 +77,7 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
     type RenderableType = Renderable;
 
     fn draw_renderable(&mut self, renderable: &Renderable, shader: &Self::ShaderType, textures: &[Self::TextureType]) {
+        log::debug!("drawing {:p}, {:p}, {:p}, {:?}", renderable, shader, textures, std::thread::current().id());
         for (n, t) in textures.iter().enumerate() {
             t.bind(n.try_into().unwrap());
         }

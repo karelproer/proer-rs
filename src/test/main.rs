@@ -1,66 +1,44 @@
 extern crate proer;
 use proer::system::window::{Window, CursorMode};
 use proer::system::event::Event;
-use proer::graphics::renderer::Renderer;
+use proer::graphics::{renderer::Renderer, color::Color};
 use proer::graphics::shader::Shader;
 use proer::graphics::texture::*;
 use proer::graphics::vertexlayout::VertexAtribute;
 use proer::graphics::vertexlayout::VertexAttributeType;
 use proer::core::application::Application;
 use proer::core::layer::Layer;
+use proer::ecs::{scene::Scene, systems::{scenerenderer::{SceneRenderer, render_scene_system}, simplescenerenderer::SimpleSceneRenderer}};
+use proer::ecs::components::{spriterenderer::SpriteRenderer, transform::Transform};
+use proer::*;
 
-use std::boxed::Box;
+use std::{boxed::Box, rc::Rc, cell::RefCell};
+use std::borrow::BorrowMut;
+use std::{sync::Arc, sync::Mutex};
 use nalgebra as na;
-use na::{Transform3, Matrix4, Rotation3, Translation3, Scale3};
+use na::{Transform3, Matrix4, Rotation3, Translation3, Scale3, Similarity3, UnitQuaternion, Vector3};
+use legion::{IntoQuery, Schedule};
 
-struct TestLayer {
+struct TestLayer<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     time: f32,
+    scene: Option<Scene>,
+    scenerenderer: Option<Arc<Mutex<SimpleSceneRenderer<WindowImpl, RendererImpl>>>>,
 }
 
-impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, RendererImpl> for TestLayer {
-    fn on_update(&mut self, elapsed: std::time::Duration, app: &mut Application<WindowImpl, RendererImpl>) {
-        app.window().set_cursor_mode(CursorMode::Disabled);
-        assert!(app.set_raw_mouse_input(true));
-        self.time += elapsed.as_secs_f32();
-        let size = app.get_size();
-        app.renderer().begin_scene(proer::graphics::color::Color { r: 0, g: 20, b: 0, a: 0 }, size);
-        let mut shader = RendererImpl::ShaderType::new(r#"
-            #version 330 core
-            layout(location = 0) in vec3 a_Pos;
-            layout(location = 1) in vec2 a_TexCoord;
-
-            uniform mat4 u_Transform;
-            out vec2 v_TexCoord;
-
-            void main() {
-                gl_Position = vec4(a_Pos, 1.0) * u_Transform;
-                v_TexCoord = a_TexCoord;
-            }
-        "#, r#"
-            #version 330 core
-            out vec4 color;
-            
-            in vec2 v_TexCoord;
-
-            uniform sampler2D texture0;
-
-            void main() {
-                color = texture(texture0, v_TexCoord);
-            }
-        "#).unwrap();
-        let t = (Translation3::<f32>::new( self.time.cos() * 0.4, (self.time * 0.2).cos() * 0.5, 0.0) * Rotation3::<f32>::from_euler_angles(0.0, 0.0, self.time)).to_matrix() * Scale3::<f32>::new((self.time * 0.1).tan(), (self.time * 0.1).tan(), 1.0).to_homogeneous();
-        let location = shader.get_uniform_location("u_Transform");
-        shader.set_uniform_matrix(location, t.into());
-        let layout: [VertexAtribute; 2] = [VertexAtribute { name: String::from("Pos"), datatype: VertexAttributeType::Float3, interpolate: true }, VertexAtribute { name: String::from("TexCoord"), datatype: VertexAttributeType::Float2, interpolate: true }];
-        
-        #[repr(C)]
-        struct Vertex([f32; 3], [f32; 2]);
-        const VERTICES: [Vertex; 4] =
-        [Vertex([-0.5, -0.5, 0.0], [1.0, 1.0]), Vertex([0.5, -0.5, 0.0], [0.0, 1.0]), Vertex([0.5, 0.5, 0.0], [0.0, 0.0]), Vertex([-0.5, 0.5, 0.0], [1.0, 0.0])];
-        const INDICES: [u32; 6] = [0, 1, 2, 0, 2, 3];
+impl<WindowImpl: Window + 'static, RendererImpl: Renderer<WindowImpl> + 'static> Layer<WindowImpl, RendererImpl> for TestLayer<WindowImpl, RendererImpl> {
+    fn on_create(&mut self, app: &mut Application<WindowImpl, RendererImpl>) {
         let image = image::open("image.jpg").unwrap().into_rgba8();
-        let texture = [RendererImpl::TextureType::new(image, SamplingMode::Nearset)];
-        app.renderer().draw(&VERTICES, &INDICES, &layout, shader, &texture);
+        self.scene = Some(Scene::new());
+        self.scene.as_mut().unwrap().create_entity((SpriteRenderer {texture: Arc::new(Mutex::new(RendererImpl::TextureType::new(image, SamplingMode::Nearset))), color: Color {r: 255, g: 255, b: 255, a: 255}}, Transform {transform: Similarity3::from_parts(Translation3::new(0.5, 0.5, 0.0), UnitQuaternion::from_euler_angles(0.0, 0.0, 1.0), 2.0)}));
+        self.scenerenderer = Some(Arc::new(Mutex::new(SimpleSceneRenderer::new(app.get_renderer_pointer()))))
+    }
+
+    fn on_update(&mut self, elapsed: std::time::Duration, app: &mut Application<WindowImpl, RendererImpl>) {
+        let size = app.get_size();
+        app.renderer().begin_scene(Color {r: 0, g: 200, b: 0, a: 255}, size);
+
+        let mut schedule = Schedule::builder().add_thread_local(render_scene_system(self.scenerenderer.as_mut().unwrap().clone())).build();
+        self.scene.as_mut().unwrap().run(&mut schedule);
 
         app.renderer().end_scene();
     }
@@ -74,5 +52,5 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Layer<WindowImpl, R
 fn main() {
     env_logger::init();
 
-    Application::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>>::new("proer", (800, 600), vec!(Box::new(TestLayer {time: 0.0})));
+    Application::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>>::new("proer", (800, 600), vec!(Box::new(TestLayer::<proer::system::glfw::window::Window, proer::graphics::opengl::renderer::Renderer<proer::system::glfw::window::Window>> {time: 0.0, scene: None, scenerenderer: None})));
 }

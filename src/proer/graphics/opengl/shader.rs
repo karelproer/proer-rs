@@ -101,6 +101,13 @@ impl super::super::shader::Shader for ShaderProgram {
         }
     }
 
+    fn set_uniform_float4(&mut self, location: u32, value: nalgebra::Vector4<f32>) {
+        self.bind();
+        unsafe {
+            gl::Uniform4f(location.try_into().unwrap(), value.x, value.y, value.z, value.w);
+        }
+    }
+
     fn get_uniform_location(&mut self, name: &str) -> u32 {
         unsafe {
             let mut n = 0;

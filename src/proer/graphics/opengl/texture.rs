@@ -1,4 +1,5 @@
 use super::super::texture;
+use std::fmt;
 
 pub struct Texture {
     pub id: u32,
@@ -54,8 +55,17 @@ impl texture::Texture for Texture {
 
 impl Drop for Texture {
     fn drop(&mut self) {
+        log::warn!("texture {} deleted", self.id);
         unsafe {
             gl::DeleteTextures(1, &self.id);
         }
+    }
+}
+
+impl fmt::Debug for Texture {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("OpenGL texture")
+         .field("id", &self.id)
+         .finish()
     }
 }

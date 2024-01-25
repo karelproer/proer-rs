@@ -31,7 +31,7 @@ impl super::super::framebuffer::FrameBuffer for FrameBuffer {
             texture.bind(0);
             gl::FramebufferTexture2D(gl::FRAMEBUFFER, gl::COLOR_ATTACHMENT0, gl::TEXTURE_2D, texture.id, 0);  
             gl::BindFramebuffer(gl::FRAMEBUFFER, 0);
-            Self {id: fbo, color: texture}
+            Self {id: fbo, _color: texture}
         }
     }
 }

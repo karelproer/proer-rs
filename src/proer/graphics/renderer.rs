@@ -4,14 +4,15 @@ use super::shader::Shader;
 use super::texture::Texture;
 use super::renderable::Renderable;
 use super::framebuffer::FrameBuffer;
+use std::{sync::Arc, sync::Mutex};
 
 pub trait Renderer<Context> {
     type ShaderType: Shader;
-    type TextureType: Texture;
+    type TextureType: Texture + 'static;
     type RenderableType: Renderable;
     type FrameBufferType: FrameBuffer<TextureType = Self::TextureType>;
 
-    fn new(context: std::rc::Rc<std::cell::RefCell<Context>>) -> Self;
+    fn new(context: Arc<Mutex<Context>>) -> Self;
     
     fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32));
     fn begin_scene_framebuffer(&mut self, background: Color, viewport_size: (u32, u32), framebuffer: &mut Self::FrameBufferType);

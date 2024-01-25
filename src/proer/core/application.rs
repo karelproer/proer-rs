@@ -5,13 +5,13 @@ use crate::utils::time::frametimer::FrameTimer;
 use crate::system::event::Event;
 use super::layer::Layer;
 
-use std::{vec::Vec, boxed::Box, cell::RefCell};
+use std::{vec::Vec, boxed::Box, cell::RefCell, rc::Rc, sync::{Arc, Mutex, MutexGuard}};
 
 
 pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     layers: Vec<Box<dyn Layer<WindowImpl, RendererImpl>>>,
-    renderer: RendererImpl,
-    window: std::rc::Rc<RefCell<WindowImpl>>,
+    renderer: Arc<Mutex<RendererImpl>>,
+    window: Arc<Mutex<WindowImpl>>,
     platform: WindowImpl::Platform,
     running: bool,
     frame_timer: FrameTimer,
@@ -22,8 +22,8 @@ pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowImpl, RendererImpl> {
     pub fn new(name: &str, size: (u32, u32), layers: Vec<Box<dyn Layer<WindowImpl, RendererImpl>>>) {
         let mut platform = WindowImpl::Platform::new();
-        let window = std::rc::Rc::new(RefCell::new(WindowImpl::new(&mut platform, size, name)));
-        let renderer = RendererImpl::new(window.clone());
+        let window = Arc::new(Mutex::new(WindowImpl::new(&mut platform, size, name)));
+        let renderer = Arc::new(Mutex::new(RendererImpl::new(window.clone())));
         Self {
             renderer,
             platform,
@@ -46,7 +46,7 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
         while self.running {
             let dur = self.frame_timer.frame();
 
-            while let Some(e) = { let x = self.window.borrow_mut().get_event(); x } {
+            while let Some(e) = { let x = self.window.lock().unwrap().get_event(); x } {
                 match e {
                     Event::Resize(s) => {
                         self.size = s;
@@ -73,7 +73,7 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
                 l.on_update(dur, self);
             }
             self.layers = layers_borrowed;
-            self.window.borrow_mut().update(&mut self.platform);
+            self.window.lock().unwrap().update(&mut self.platform);
         }
 
         let mut layers_borrowed = std::mem::replace(&mut self.layers, vec!());
@@ -83,12 +83,16 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
         self.layers = layers_borrowed;
     }
 
-    pub fn window(&self) -> std::cell::RefMut<'_, WindowImpl> {
-        self.window.borrow_mut()
+    pub fn window(&self) -> MutexGuard<'_, WindowImpl> {
+        self.window.lock().unwrap()
     }
 
-    pub fn renderer(&mut self) -> &mut RendererImpl {
-        &mut self.renderer
+    pub fn renderer(&mut self) -> MutexGuard<'_, RendererImpl> {
+        self.renderer.lock().unwrap()
+    }
+
+    pub fn get_renderer_pointer(&mut self) -> Arc<Mutex<RendererImpl>> {
+        self.renderer.clone()
     }
 
     pub fn close(&mut self) {
@@ -104,7 +108,7 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
     }
 
     pub fn set_raw_mouse_input(&mut self, raw: bool) -> bool {
-        self.window.borrow_mut().set_raw_mouse_input(raw, &mut self.platform)
+        self.window.lock().unwrap().set_raw_mouse_input(raw, &mut self.platform)
     }
 
     pub fn get_cursor_pos(&mut self) -> (f64, f64) {

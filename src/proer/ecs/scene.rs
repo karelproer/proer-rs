@@ -2,26 +2,27 @@ extern crate legion;
 use legion::{World, Schedule, Resources};
 use super::entity::Entity;
 
-pub type Resource = legion::Resource;
+pub use legion::systems::Resource;
 
 pub struct Scene {
-    world: World,
-    recources: Resources,
+    pub world: World,
+    pub resources: Resources,
 }
 
 impl Scene {
-    fn new() {
+    pub fn new() -> Self {
         Self {
-            World::Defualt(),
-            Resources::::Defualt();
+            world: World::default(),
+            resources: Resources::default(),
         }
     }
 
-    fn create_entity<T>(&mut self, components: T) -> Entity {
-        world.push(components)
+    pub fn create_entity<T: legion::storage::Component>(&mut self, components: T) -> Entity 
+    where Option<T>: legion::storage::IntoComponentSource {
+        self.world.push(components)
     }
 
-    fn execute(&mut self, schelude: Schedule) {
+    pub fn run(&mut self, schedule: &mut Schedule) {
         schedule.execute(&mut self.world, &mut self.resources);
     }
 }
