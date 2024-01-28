@@ -1,6 +1,5 @@
 use crate::graphics::{color::Color, texture::Texture};
-use std::{rc::Rc, sync::Arc, sync::Mutex};
-use uuid::Uuid;
+use std::{sync::Arc, sync::Mutex};
 
 #[derive(Clone)]
 pub struct SpriteRenderer {

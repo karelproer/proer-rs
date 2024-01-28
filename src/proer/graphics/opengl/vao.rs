@@ -44,7 +44,7 @@ impl Vao {
         let mut size = 0;
         for (n, attr) in layout.iter().enumerate() {
             unsafe {
-                gl::VertexAttribPointer(n.try_into().unwrap(), attr.datatype.amount().try_into().unwrap(), Self::vertex_attribute_type_to_opengl(attr.datatype), attr.interpolate as GLboolean, total_size.try_into().unwrap(), size as *const _);
+                gl::VertexAttribPointer(n.try_into().unwrap(), attr.datatype.amount().try_into().unwrap(), Self::vertex_attribute_type_to_opengl(attr.datatype), 0, total_size.try_into().unwrap(), size as *const _);
                 gl::EnableVertexAttribArray(n.try_into().unwrap());
                 size += attr.datatype.size();
             }

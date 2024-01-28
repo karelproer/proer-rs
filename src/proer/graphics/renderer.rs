@@ -14,9 +14,11 @@ pub trait Renderer<Context> {
 
     fn new(context: Arc<Mutex<Context>>) -> Self;
     
-    fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32));
-    fn begin_scene_framebuffer(&mut self, background: Color, viewport_size: (u32, u32), framebuffer: &mut Self::FrameBufferType);
+    fn begin_scene(&mut self, background: &Color, viewport_size: (u32, u32));
+    fn begin_scene_framebuffer(&mut self, background: &Color, viewport_size: (u32, u32), framebuffer: &mut Self::FrameBufferType);
     fn end_scene(&mut self);
+
+    fn get_aspectratio(&self) -> f32;
 
     fn draw<Vertex>(&mut self, vertices: &[Vertex], indices: &[u32], vertex_layout: &[VertexAtribute], shader: &Self::ShaderType, textures: &[Self::TextureType]);
     fn draw_renderable(&mut self, renderable: &Self::RenderableType, shader: &Self::ShaderType, textures: &[Self::TextureType]);

@@ -5,7 +5,7 @@ use crate::utils::time::frametimer::FrameTimer;
 use crate::system::event::Event;
 use super::layer::Layer;
 
-use std::{vec::Vec, boxed::Box, cell::RefCell, rc::Rc, sync::{Arc, Mutex, MutexGuard}};
+use std::{vec::Vec, boxed::Box, sync::{Arc, Mutex, MutexGuard}};
 
 
 pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
@@ -20,7 +20,7 @@ pub struct Application<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
 }
 
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowImpl, RendererImpl> {
-    pub fn new(name: &str, size: (u32, u32), layers: Vec<Box<dyn Layer<WindowImpl, RendererImpl>>>) {
+    pub fn new(name: &str, size: (u32, u32)) -> Self{
         let mut platform = WindowImpl::Platform::new();
         let window = Arc::new(Mutex::new(WindowImpl::new(&mut platform, size, name)));
         let renderer = Arc::new(Mutex::new(RendererImpl::new(window.clone())));
@@ -28,21 +28,21 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> Application<WindowI
             renderer,
             platform,
             window,
-            layers,
+            layers: Vec::new(),
             running: true,
             frame_timer: FrameTimer::new(),
             size,
             cursor_pos: ((0.0, 0.0))
-        }.run();
+        }
     }
 
-    fn run(&mut self) {
+    pub fn add_layer<T: Layer<WindowImpl, RendererImpl> + 'static>(&mut self) {
         let mut layers_borrowed = std::mem::replace(&mut self.layers, vec!());
-        for l in &mut layers_borrowed {
-            l.on_create(self);
-        }
+        layers_borrowed.push(Box::new(T::create(self)));
         self.layers = layers_borrowed;
+    }
 
+    pub fn run(&mut self) {
         while self.running {
             let dur = self.frame_timer.frame();
 

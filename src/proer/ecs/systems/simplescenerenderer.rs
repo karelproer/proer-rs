@@ -6,13 +6,14 @@ use crate::graphics::vertexlayout::VertexAttributeType;
 use crate::graphics::shader::Shader;
 use crate::graphics::renderable::Renderable;
 use super::super::components::{spriterenderer::SpriteRenderer, transform::Transform};
-use std::{rc::Rc, cell::RefCell};
 use std::{sync::Arc, sync::Mutex};
+use nalgebra::{ Matrix4 };
 
 pub struct SimpleSceneRenderer<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> {
     renderer: Arc<Mutex<RendererImpl>>,
     shader: RendererImpl::ShaderType,
     renderable: RendererImpl::RenderableType,
+    camera: Matrix4<f32>,
 }
 
 #[repr(C)]
@@ -49,18 +50,27 @@ impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> SimpleSceneRenderer
         const VERTICES: [Vertex; 4] =
         [Vertex([-0.5, -0.5, 0.0], [1.0, 1.0]), Vertex([0.5, -0.5, 0.0], [0.0, 1.0]), Vertex([0.5, 0.5, 0.0], [0.0, 0.0]), Vertex([-0.5, 0.5, 0.0], [1.0, 0.0])];
         const INDICES: [u32; 6] = [0, 1, 2, 0, 2, 3];
-        let LAYOUT: [VertexAtribute; 2] = [VertexAtribute { name: String::from("a_Pos"), datatype: VertexAttributeType::Float3, interpolate: true }, VertexAtribute { name: String::from("a_TexCoord"), datatype: VertexAttributeType::Float2, interpolate: true }];
+        const LAYOUT: [VertexAtribute; 2] = [VertexAtribute { name: "a_Pos", datatype: VertexAttributeType::Float3 }, VertexAtribute { name: "a_TexCoord" , datatype: VertexAttributeType::Float2 }];
         let renderable = RendererImpl::RenderableType::new(&VERTICES, &INDICES, &LAYOUT);
 
         Self {
             renderer,
             shader,
             renderable,
+            camera: Matrix4::<f32>::identity(),
         }
     }
 }
 
 impl<WindowImpl: Window, RendererImpl: Renderer<WindowImpl>> SceneRenderer for SimpleSceneRenderer<WindowImpl, RendererImpl> {
+    fn set_camera(&mut self, camera: &Matrix4<f32>) {
+        self.camera = *camera;
+    }
+    
+    fn get_aspectratio(&self) -> f32 {
+        self.renderer.lock().unwrap().get_aspectratio()
+    }
+    
     fn render(&mut self, spriterenderer: &SpriteRenderer, transform: &Transform) {
         self.shader.set_uniform_matrix(1, transform.transform.into());
         self.shader.set_uniform_float4(2, spriterenderer.color.as_vec4());

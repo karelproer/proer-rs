@@ -31,9 +31,8 @@ impl VertexAttributeType {
 
 #[derive(Clone)]
 pub struct VertexAtribute {
-    pub name: String,
+    pub name: &'static str,
     pub datatype: VertexAttributeType,
-    pub interpolate: bool,
 }
 
 

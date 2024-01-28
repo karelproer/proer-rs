@@ -12,19 +12,28 @@ use super::framebuffer::FrameBuffer;
 use std::{sync::Arc, sync::Mutex};
 
 pub struct Renderer<Context> {
-    context: Arc<Mutex<Context>>
+    context: Arc<Mutex<Context>>,
+    aspectratio: f32,
+}
+
+impl<Context: window::OpenGLContext> Renderer<Context> {
+    fn begin_scene_base(&mut self, _background: &Color, viewport_size: (u32, u32)) {
+        self.context.lock().unwrap().make_current();
+        self.aspectratio = viewport_size.1  as f32 / viewport_size.0 as f32;
+    }
 }
 
 impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> for Renderer<Context> {
     fn new(context: Arc<Mutex<Context>>) -> Self {
         gl::load_with(|s| context.lock().unwrap().get_proc_address(s));
         Self {
-            context
+            context,
+            aspectratio : 1.0,
         }
     }
 
-    fn begin_scene(&mut self, background: Color, viewport_size: (u32, u32)) {
-        self.context.lock().unwrap().make_current();
+    fn begin_scene(&mut self, background: &Color, viewport_size: (u32, u32)) {
+        self.begin_scene_base(background, viewport_size);
         FrameBuffer::unbind();
         unsafe {
             gl::Viewport(0, 0, viewport_size.0.try_into().unwrap(), viewport_size.1.try_into().unwrap());
@@ -35,8 +44,8 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
 
     type FrameBufferType = FrameBuffer;
 
-    fn begin_scene_framebuffer(&mut self, background: Color, viewport_size: (u32, u32), framebuffer: &mut FrameBuffer) {
-        self.context.lock().unwrap().make_current();
+    fn begin_scene_framebuffer(&mut self, background: &Color, viewport_size: (u32, u32), framebuffer: &mut FrameBuffer) {
+        self.begin_scene_base(background, viewport_size);
         framebuffer.bind();
         unsafe {
             gl::Viewport(0, 0, viewport_size.0.try_into().unwrap(), viewport_size.1.try_into().unwrap());
@@ -46,6 +55,10 @@ impl<Context: window::OpenGLContext> super::super::renderer::Renderer<Context> f
     }
 
     fn end_scene(&mut self) {
+    }
+
+    fn get_aspectratio(&self) -> f32 {
+        self.aspectratio
     }
 
     type ShaderType = ShaderProgram;
